@@ -379,12 +379,13 @@
                     </LinearLayout>
 
 
-                    <!-- TURBIDITY / RAIN -->
+                    <!-- TURBIDITY / TEMPERATURE -->
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="8dp">
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -409,22 +410,38 @@
                                 android:textColor="#64748B"
                                 android:layout_marginTop="6dp"/>
 
-                            <TextView
-                                android:id="@+id/tvTurbidity"
+                            <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="--"
-                                android:textSize="25sp"
-                                android:textStyle="bold"
-                                android:textColor="#172033"/>
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:id="@+id/tvTurbidity"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="--"
+                                    android:textSize="25sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#172033"/>
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text=" NTU"
+                                    android:textSize="11sp"
+                                    android:textColor="#64748B"
+                                    android:layout_gravity="bottom"
+                                    android:layout_marginBottom="4dp"/>
+
+                            </LinearLayout>
 
                             <TextView
                                 android:id="@+id/tvTurbidityStatus"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Prototype value"
+                                android:text="Waiting"
                                 android:textSize="10sp"
-                                android:textColor="#D97706"/>
+                                android:textColor="#64748B"/>
 
                         </LinearLayout>
 
@@ -437,6 +454,73 @@
                             android:background="#F1F7FA"
                             android:padding="15dp"
                             android:layout_marginLeft="4dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🌡"
+                                android:textSize="20sp"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Temperature"
+                                android:textSize="12sp"
+                                android:textColor="#64748B"
+                                android:layout_marginTop="6dp"/>
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:id="@+id/tvTemperature"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="--"
+                                    android:textSize="25sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#172033"/>
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text=" °C"
+                                    android:textSize="11sp"
+                                    android:textColor="#64748B"
+                                    android:layout_gravity="bottom"
+                                    android:layout_marginBottom="4dp"/>
+
+                            </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/tvTempStatus"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Waiting"
+                                android:textSize="10sp"
+                                android:textColor="#64748B"/>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+
+                    <!-- RAIN (full width) -->
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:background="#F1F7FA"
+                            android:padding="15dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
@@ -645,7 +729,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Project thresholds: pH &gt; 8.5 and TDS &gt; 500 ppm."
+                        android:text="Thresholds: pH > 8.5, TDS > 500 ppm, Turbidity > 30 NTU, Temp > 40°C."
                         android:textSize="11sp"
                         android:textColor="#94A3B8"
                         android:paddingTop="10dp"/>
@@ -750,6 +834,23 @@
                     <view
                         class="com.example.waterqualitymonitor.MainActivity$GraphView"
                         android:id="@+id/turbidityGraph"
+                        android:layout_width="match_parent"
+                        android:layout_height="180dp"
+                        android:layout_marginBottom="14dp"/>
+
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="TEMPERATURE HISTORY"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:textColor="#64748B"
+                        android:layout_marginBottom="5dp"/>
+
+                    <view
+                        class="com.example.waterqualitymonitor.MainActivity$GraphView"
+                        android:id="@+id/tempGraph"
                         android:layout_width="match_parent"
                         android:layout_height="180dp"/>
 

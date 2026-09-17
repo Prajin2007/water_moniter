@@ -19,6 +19,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import org.json.JSONObject;
 
+import android.content.SharedPreferences;
+import android.widget.EditText;
+import android.app.AlertDialog;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -43,11 +47,13 @@ public class MainActivity extends AppCompatActivity {
     TextView tvPh;
     TextView tvTds;
     TextView tvTurbidity;
+    TextView tvTemperature;
     TextView tvRain;
 
     TextView tvPhStatus;
     TextView tvTdsStatus;
     TextView tvTurbidityStatus;
+    TextView tvTempStatus;
     TextView tvRainStatus;
 
     TextView tvMlPrediction;
@@ -109,6 +115,9 @@ public class MainActivity extends AppCompatActivity {
     GraphView phGraph;
     GraphView tdsGraph;
     GraphView turbidityGraph;
+
+    GraphView tempGraph;
+    GraphView tempGraph;
     GraphView riskGraph;
 
 
@@ -130,8 +139,11 @@ public class MainActivity extends AppCompatActivity {
     // SERVER
     // =========================================================
 
-    private static final String SERVER_URL =
+    private String serverUrl;
+    private static final String DEFAULT_SERVER_URL =
             "http://10.216.92.252:5003/latest";
+    private static final String PREFS_NAME = "WaterMonitorPrefs";
+    private static final String KEY_SERVER_URL = "server_url";
 
     private static final long UPDATE_INTERVAL = 1000;
 
@@ -183,11 +195,17 @@ public class MainActivity extends AppCompatActivity {
                 R.layout.activity_main
         );
 
+        // Load server URL from SharedPreferences
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        serverUrl = prefs.getString(KEY_SERVER_URL, DEFAULT_SERVER_URL);
+
         initializeViews();
 
         setupExpandableBlocks();
 
         setupButtons();
+
+        setupServerUrlDialog();
 
         startLiveUpdates();
     }
@@ -227,6 +245,9 @@ public class MainActivity extends AppCompatActivity {
         tvTurbidity =
                 findViewById(R.id.tvTurbidity);
 
+        tvTemperature =
+                findViewById(R.id.tvTemperature);
+
         tvRain =
                 findViewById(R.id.tvRain);
 
@@ -239,6 +260,9 @@ public class MainActivity extends AppCompatActivity {
 
         tvTurbidityStatus =
                 findViewById(R.id.tvTurbidityStatus);
+
+        tvTempStatus =
+                findViewById(R.id.tvTempStatus);
 
         tvRainStatus =
                 findViewById(R.id.tvRainStatus);
@@ -370,6 +394,16 @@ public class MainActivity extends AppCompatActivity {
                         R.id.turbidityGraph
                 );
 
+        tempGraph =
+                findViewById(
+                        R.id.tempGraph
+                );
+
+        tempGraph =
+                findViewById(
+                        R.id.tempGraph
+                );
+
         riskGraph =
                 findViewById(
                         R.id.riskGraph
@@ -473,6 +507,35 @@ public class MainActivity extends AppCompatActivity {
 
             arrow.setText("▼");
         }
+    }
+
+
+    // =========================================================
+    // SERVER URL DIALOG
+    // =========================================================
+
+    private void setupServerUrlDialog() {
+        tvConnection.setOnLongClickListener(v -> {
+            final EditText input = new EditText(this);
+            input.setText(serverUrl);
+            input.setSelectAllOnFocus(true);
+
+            new AlertDialog.Builder(this)
+                    .setTitle("Server URL")
+                    .setMessage("Enter Flask backend URL:")
+                    .setView(input)
+                    .setPositiveButton("Save", (dialog, which) -> {
+                        String url = input.getText().toString().trim();
+                        if (!url.isEmpty()) {
+                            serverUrl = url;
+                            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                            prefs.edit().putString(KEY_SERVER_URL, url).apply();
+                        }
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+            return true;
+        });
     }
 
 
@@ -613,7 +676,7 @@ public class MainActivity extends AppCompatActivity {
 
                         URL url =
                                 new URL(
-                                        SERVER_URL
+                                        serverUrl
                                 );
 
                         connection =
@@ -681,6 +744,12 @@ public class MainActivity extends AppCompatActivity {
                                         "Turbidity_NTU"
                                 );
 
+                        double temperature =
+                                data.optDouble(
+                                        "Temperature_C",
+                                        25.0
+                                );
+
                         String rain =
                                 data.optString(
                                         "rain",
@@ -722,6 +791,17 @@ public class MainActivity extends AppCompatActivity {
                                         tds > 500
                                 );
 
+                        boolean turbHigh =
+                                data.optBoolean(
+                                        "turbidity_threshold_exceeded",
+                                        turbidity > 30
+                                );
+
+                        boolean tempHigh =
+                                data.optBoolean(
+                                        "temperature_threshold_exceeded",
+                                        temperature > 40
+                                );
 
                         String alert =
                                 data.optString(
@@ -743,12 +823,15 @@ public class MainActivity extends AppCompatActivity {
                                                 pH,
                                                 tds,
                                                 turbidity,
+                                                temperature,
                                                 rain,
                                                 prediction,
                                                 mlPrediction,
                                                 risk,
                                                 phHigh,
                                                 tdsHigh,
+                                                turbHigh,
+                                                tempHigh,
                                                 alert
                                         );
                                     }
@@ -796,12 +879,15 @@ public class MainActivity extends AppCompatActivity {
             double pH,
             double tds,
             double turbidity,
+            double temperature,
             String rain,
             String prediction,
             String mlPrediction,
             double risk,
             boolean phHigh,
             boolean tdsHigh,
+            boolean turbHigh,
+            boolean tempHigh,
             String alert
     ) {
 
@@ -971,6 +1057,13 @@ public class MainActivity extends AppCompatActivity {
                 )
         );
 
+        tvTemperature.setText(
+                String.format(
+                        Locale.US,
+                        "%.1f",
+                        temperature
+                )
+        );
 
         tvRain.setText(
                 rain
@@ -1041,18 +1134,37 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        tvTurbidityStatus.setText(
-                "Prototype value"
-        );
+        if (turbHigh) {
+            tvTurbidityStatus.setText(
+                    "⚠ Above 30 NTU"
+            );
+            tvTurbidityStatus.setTextColor(
+                    Color.rgb(220, 38, 38)
+            );
+        } else {
+            tvTurbidityStatus.setText(
+                    "Within project threshold"
+            );
+            tvTurbidityStatus.setTextColor(
+                    Color.rgb(22, 163, 74)
+            );
+        }
 
-        tvTurbidityStatus.setTextColor(
-                Color.rgb(
-                        217,
-                        119,
-                        6
-                )
-        );
-
+        if (tempHigh) {
+            tvTempStatus.setText(
+                    "⚠ Above 40°C"
+            );
+            tvTempStatus.setTextColor(
+                    Color.rgb(220, 38, 38)
+            );
+        } else {
+            tvTempStatus.setText(
+                    "Within project threshold"
+            );
+            tvTempStatus.setTextColor(
+                    Color.rgb(22, 163, 74)
+            );
+        }
 
         if (
                 rain.equalsIgnoreCase(
@@ -1097,10 +1209,12 @@ public class MainActivity extends AppCompatActivity {
                         Locale.US,
                         "pH          %.2f\n" +
                                 "TDS         %.1f ppm\n" +
-                                "Turbidity   %.1f NTU",
+                                "Turbidity   %.1f NTU\n" +
+                                "Temperature %.1f °C",
                         pH,
                         tds,
-                        turbidity
+                        turbidity,
+                        temperature
                 )
         );
 
@@ -1251,6 +1365,7 @@ public class MainActivity extends AppCompatActivity {
                             pH,
                             tds,
                             turbidity,
+                            temperature,
                             risk,
                             prediction
                     );
@@ -1313,10 +1428,11 @@ public class MainActivity extends AppCompatActivity {
                     String.format(
                             Locale.US,
                             "pH %.2f  •  TDS %.1f  •  "
-                                    + "Turb %.1f  •  Risk %.1f  •  %s",
+                                    + "Turb %.1f  •  Temp %.1f°C  •  Risk %.1f  •  %s",
                             r.ph,
                             r.tds,
                             r.turbidity,
+                            r.temperature,
                             r.risk,
                             r.prediction
                     )
@@ -1359,6 +1475,9 @@ public class MainActivity extends AppCompatActivity {
         float[] turbidity =
                 new float[count];
 
+        float[] temperature =
+                new float[count];
+
         float[] risk =
                 new float[count];
 
@@ -1380,6 +1499,9 @@ public class MainActivity extends AppCompatActivity {
 
             turbidity[i] =
                     (float) r.turbidity;
+
+            temperature[i] =
+                    (float) r.temperature;
 
             risk[i] =
                     (float) r.risk;
@@ -1404,6 +1526,13 @@ public class MainActivity extends AppCompatActivity {
                 turbidity,
                 0,
                 30
+        );
+
+
+        tempGraph.setData(
+                temperature,
+                0,
+                60
         );
 
 
@@ -1501,6 +1630,7 @@ public class MainActivity extends AppCompatActivity {
         double ph;
         double tds;
         double turbidity;
+        double temperature;
         double risk;
         String prediction;
 
@@ -1509,6 +1639,7 @@ public class MainActivity extends AppCompatActivity {
                 double ph,
                 double tds,
                 double turbidity,
+                double temperature,
                 double risk,
                 String prediction
         ) {
@@ -1516,6 +1647,7 @@ public class MainActivity extends AppCompatActivity {
             this.ph = ph;
             this.tds = tds;
             this.turbidity = turbidity;
+            this.temperature = temperature;
             this.risk = risk;
             this.prediction = prediction;
         }
